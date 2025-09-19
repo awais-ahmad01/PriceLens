@@ -103,11 +103,223 @@
 
 
 
+// "use server";
+
+// import puppeteer from "puppeteer";
+// import { extractCurrency, extractDescription, extractPrice } from "../utils";
+
+
+// interface ScrapedProduct {
+//   currentPrice: number;
+//   originalPrice: number;
+//   currency: string;
+//   discountRate: number;
+//   url: string;
+//   priceHistory: any[];
+//   category: string;
+//   reviewsCount: number;
+//   stars: number;
+//   lowestPrice: number;
+//   highestPrice: number;
+//   averagePrice: number;
+//   title: string;
+//   image: string;
+// }
+
+
+
+
+// export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct | null>  {
+//   if (!url) return null;
+
+//   let browser;
+//   try {
+//     console.log("productUrl:", url);
+//     browser = await puppeteer.launch({
+//       headless: true,
+//       args: [
+//         "--no-sandbox",
+//         "--disable-setuid-sandbox",
+//         "--disable-dev-shm-usage",
+//       ],
+//     });
+
+//     const page = await browser.newPage();
+
+//     // Set user agent to appear more like a real browser
+//     await page.setUserAgent(
+//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+//     );
+
+//     await page.goto(url, { 
+//       waitUntil: "networkidle2", 
+//       timeout: 60000 
+//     });
+
+   
+//     await new Promise((resolve) => setTimeout(resolve, 8000));
+
+//     // Debug: Check what elements are actually available
+//     await page.evaluate(() => {
+//       console.log('=== DEBUG: Available price elements ===');
+      
+      
+//       const priceElements = document.querySelectorAll('[class*="price"]');
+//       priceElements.forEach((el, index) => {
+//         console.log(`Price Element ${index}:`, el.className, '→', el.textContent?.trim());
+//       });
+      
+//       // Find all elements with 'pdp-product-price' in class name
+//       const pdpPriceElements = document.querySelectorAll('[class*="pdp-product-price"]');
+//       pdpPriceElements.forEach((el, index) => {
+//         console.log(`PDP Price Element ${index}:`, el.className, '→', el.textContent?.trim());
+//       });
+//     });
+
+//     const productData = await page.evaluate(() => {
+//       // Helper function to try multiple selectors
+//       const tryMultipleSelectors = (selectors: string[]): string | null => {
+//         for (const selector of selectors) {
+//           const element = document.querySelector(selector);
+//           const text = element?.textContent?.trim();
+//           if (text && text !== '') {
+//             console.log(`Found with selector "${selector}": ${text}`);
+//             return text;
+//           }
+//         }
+//         return null;
+//       };
+
+//       // Multiple possible selectors for current price
+//       const currentPriceSelectors = [
+//         // original selectors
+//         ".notranslate.pdp-price.pdp-price_type_normal.pdp-price_color_orange.pdp-price_size_xl",
+//         // Alternative selectors based on common Daraz patterns
+//         ".pdp-product-price .pdp-price",
+//         ".pdp-product-price .notranslate",
+//         ".pdp-price_color_orange",
+//         ".pdp-price_type_normal",
+//         // More generic selectors
+//         '[class*="pdp-price"][class*="orange"]',
+//         '[class*="pdp-price"][class*="normal"]',
+//         '.pdp-product-price span[class*="price"]',
+//         // Fallback selectors
+//         '[class*="current-price"]',
+//         '[class*="sale-price"]',
+//         '.price-current',
+//         // Even more generic
+//         '[class*="price"]:not([class*="deleted"]):not([class*="original"])'
+//       ];
+
+//       // Multiple possible selectors for original price
+//       const originalPriceSelectors = [
+//         // original selector
+//         ".notranslate.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs",
+//         // Alternative selectors
+//         ".pdp-price_type_deleted",
+//         ".pdp-price_color_lightgray",
+//         '[class*="pdp-price"][class*="deleted"]',
+//         '[class*="original-price"]',
+//         '[class*="was-price"]',
+//         '.price-original',
+//         '.origin-block .pdp-price',
+//         // Generic strikethrough price
+//         '[style*="text-decoration: line-through"]',
+//         '[class*="strike"]'
+//       ];
+
+//       // Multiple possible selectors for discount
+//       const discountSelectors = [
+//         // original selector
+//         ".pdp-product-price__discount",
+//         // Alternative selectors
+//         '[class*="discount"]',
+//         '[class*="save"]',
+//         '[class*="off"]',
+//         '.pdp-product-price .discount',
+//         '.sale-badge',
+//         '.discount-badge'
+//       ];
+
+//       const title = document.querySelector(".pdp-mod-product-badge-title")?.textContent?.trim() ?? null;
+//       const currentPrice = tryMultipleSelectors(currentPriceSelectors);
+//       const originalPrice = tryMultipleSelectors(originalPriceSelectors);
+//       const discountRate = tryMultipleSelectors(discountSelectors);
+      
+//       // Try to get image with multiple selectors
+//       const imageSelectors = [
+//         ".pdp-mod-common-image.gallery-preview-panel__image",
+//         ".gallery-preview-panel__image",
+//         ".pdp-mod-common-image",
+//         '[class*="gallery-preview"] img',
+//         '.item-gallery img',
+//         '.product-image img'
+//       ];
+      
+//       let image = null;
+//       for (const selector of imageSelectors) {
+//         const imgElement = document.querySelector(selector);
+//         if (imgElement) {
+//           image = imgElement.getAttribute('src') || imgElement.getAttribute('data-src');
+//           if (image) break;
+//         }
+//       }
+
+//       return {
+//         title,
+//         currentPrice,
+//         originalPrice,
+//         discountRate,
+//         image,
+       
+//       };
+//     });
+
+//     console.log("Scraped Data:", productData);
+
+//     await browser.close();
+
+  
+//     const data = {
+//       ...productData,
+//         currentPrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })),
+//         originalPrice: Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
+//         currency: extractCurrency({text: ()=> productData.originalPrice ?? ""}),
+//         discountRate: Number(productData?.discountRate?.replace(/[-%]/g, "")),
+//       url,
+//       priceHistory: [],
+//       category: "category",
+//       reviewsCount: 100,
+//       stars: 4.5,
+//       lowestPrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })) || Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
+//       highestPrice: Number(extractPrice({ text: () => productData.originalPrice ?? "" })) || Number(extractPrice({ text: () => productData.currentPrice ?? "" })),
+//       averagePrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })) || Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
+//       title: productData.title ?? "",
+//       image: productData.image ?? "",
+//     //   isOutOfStock: outOfStock,
+//     //   description,
+//     };
+
+//     console.log("Final Data:", data);
+//     return data;
+
+//   } catch (error: any) {
+//     console.log("Scraping Error:", error.message);
+//     if (browser) {
+//       await browser.close();
+//     }
+//     return null;
+//   }
+// }
+
+
+
+
 "use server";
 
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium"; 
 import { extractCurrency, extractDescription, extractPrice } from "../utils";
-
 
 interface ScrapedProduct {
   currentPrice: number;
@@ -126,8 +338,12 @@ interface ScrapedProduct {
   image: string;
 }
 
+interface ChromiumOptions {
+  defaultViewport: any;
+  headless: boolean;
+}
 
-
+const chromiumOptions = chromium as typeof chromium & ChromiumOptions;
 
 export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct | null>  {
   if (!url) return null;
@@ -135,13 +351,15 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
   let browser;
   try {
     console.log("productUrl:", url);
+
+    // Use puppeteer-core with @sparticuz/chromium
     browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
+       args: chromiumOptions.args,
+  defaultViewport: chromiumOptions.defaultViewport,
+  executablePath: process.env.NODE_ENV === "production"
+    ? await chromium.executablePath()
+    : undefined,
+  headless: chromiumOptions.headless,
     });
 
     const page = await browser.newPage();
@@ -156,20 +374,17 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
       timeout: 60000 
     });
 
-   
     await new Promise((resolve) => setTimeout(resolve, 8000));
 
     // Debug: Check what elements are actually available
     await page.evaluate(() => {
       console.log('=== DEBUG: Available price elements ===');
       
-      
       const priceElements = document.querySelectorAll('[class*="price"]');
       priceElements.forEach((el, index) => {
         console.log(`Price Element ${index}:`, el.className, '→', el.textContent?.trim());
       });
       
-      // Find all elements with 'pdp-product-price' in class name
       const pdpPriceElements = document.querySelectorAll('[class*="pdp-product-price"]');
       pdpPriceElements.forEach((el, index) => {
         console.log(`PDP Price Element ${index}:`, el.className, '→', el.textContent?.trim());
@@ -190,32 +405,23 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
         return null;
       };
 
-      // Multiple possible selectors for current price
       const currentPriceSelectors = [
-        // original selectors
         ".notranslate.pdp-price.pdp-price_type_normal.pdp-price_color_orange.pdp-price_size_xl",
-        // Alternative selectors based on common Daraz patterns
         ".pdp-product-price .pdp-price",
         ".pdp-product-price .notranslate",
         ".pdp-price_color_orange",
         ".pdp-price_type_normal",
-        // More generic selectors
         '[class*="pdp-price"][class*="orange"]',
         '[class*="pdp-price"][class*="normal"]',
         '.pdp-product-price span[class*="price"]',
-        // Fallback selectors
         '[class*="current-price"]',
         '[class*="sale-price"]',
         '.price-current',
-        // Even more generic
         '[class*="price"]:not([class*="deleted"]):not([class*="original"])'
       ];
 
-      // Multiple possible selectors for original price
       const originalPriceSelectors = [
-        // original selector
         ".notranslate.pdp-price.pdp-price_type_deleted.pdp-price_color_lightgray.pdp-price_size_xs",
-        // Alternative selectors
         ".pdp-price_type_deleted",
         ".pdp-price_color_lightgray",
         '[class*="pdp-price"][class*="deleted"]',
@@ -223,16 +429,12 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
         '[class*="was-price"]',
         '.price-original',
         '.origin-block .pdp-price',
-        // Generic strikethrough price
         '[style*="text-decoration: line-through"]',
         '[class*="strike"]'
       ];
 
-      // Multiple possible selectors for discount
       const discountSelectors = [
-        // original selector
         ".pdp-product-price__discount",
-        // Alternative selectors
         '[class*="discount"]',
         '[class*="save"]',
         '[class*="off"]',
@@ -245,8 +447,7 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
       const currentPrice = tryMultipleSelectors(currentPriceSelectors);
       const originalPrice = tryMultipleSelectors(originalPriceSelectors);
       const discountRate = tryMultipleSelectors(discountSelectors);
-      
-      // Try to get image with multiple selectors
+
       const imageSelectors = [
         ".pdp-mod-common-image.gallery-preview-panel__image",
         ".gallery-preview-panel__image",
@@ -255,7 +456,7 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
         '.item-gallery img',
         '.product-image img'
       ];
-      
+
       let image = null;
       for (const selector of imageSelectors) {
         const imgElement = document.querySelector(selector);
@@ -271,7 +472,6 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
         originalPrice,
         discountRate,
         image,
-       
       };
     });
 
@@ -279,13 +479,12 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
 
     await browser.close();
 
-  
     const data = {
       ...productData,
-        currentPrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })),
-        originalPrice: Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
-        currency: extractCurrency({text: ()=> productData.originalPrice ?? ""}),
-        discountRate: Number(productData?.discountRate?.replace(/[-%]/g, "")),
+      currentPrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })),
+      originalPrice: Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
+      currency: extractCurrency({text: ()=> productData.originalPrice ?? ""}),
+      discountRate: Number(productData?.discountRate?.replace(/[-%]/g, "")),
       url,
       priceHistory: [],
       category: "category",
@@ -296,8 +495,6 @@ export async function scrapeAmazonProduct(url: string): Promise<ScrapedProduct |
       averagePrice: Number(extractPrice({ text: () => productData.currentPrice ?? "" })) || Number(extractPrice({ text: () => productData.originalPrice ?? "" })),
       title: productData.title ?? "",
       image: productData.image ?? "",
-    //   isOutOfStock: outOfStock,
-    //   description,
     };
 
     console.log("Final Data:", data);

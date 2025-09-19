@@ -3,17 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start"
+    "dev": "node init && next dev --turbopack",
+    "build": "node init && next build --turbopack",
+    "start": "node init && next start"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.8",
+    "@sparticuz/chromium": "^138.0.2",
     "axios": "^1.12.2",
     "mongoose": "^8.18.1",
     "next": "15.5.3",
     "nodemailer": "^7.0.6",
     "puppeteer": "^24.21.0",
+    "puppeteer-core": "^24.22.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-responsive-carousel": "^3.2.23"
